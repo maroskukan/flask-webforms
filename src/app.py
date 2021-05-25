@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, request, redirect, url_for, g
+from flask import Flask, render_template, request, redirect, url_for, g, flash
 import sqlite3
 #import pdb
 import os
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = "secretkey"
 
 @app.route('/')
 def home():
@@ -59,6 +60,7 @@ def new_item():
         )
         conn.commit()
         # Redirect to home page
+        flash("Item {} has been successfully submitted".format(request.form.get("title")), "success")
         return redirect(url_for("home"))
 
     return render_template("new_item.html")
