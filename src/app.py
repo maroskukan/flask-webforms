@@ -102,6 +102,38 @@ def new_item():
     return render_template("new_item.html", form=form)
 
 
+@app.route('/item/<int:item_id>')
+def item(item_id):
+    c = get_db().cursor()
+    item_from_db = c.execute("""SELECT
+                   i.id, i.title, i.description, i.price, i.image, c.name, s.name
+                   FROM
+                   items AS i
+                   INNER JOIN categories AS c ON i.category_id = c.id
+                   INNER JOIN subcategories AS s ON i.subcategory_id = s.id
+                   WHERE i.id = ?""",
+                   (item_id,)
+    )
+    row = c.fetchone()
+    
+    try:
+        item = {
+            "id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "price": row[3],
+            "image": row[4],
+            "category": row[5],
+            "subcategory": row[6]
+        }
+    except:
+        item = {}
+    
+    if item:
+       return render_template("item.html", item=item)
+    return redirect(url_for("home"))
+
+
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
