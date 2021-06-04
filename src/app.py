@@ -13,8 +13,7 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "secretkey"
 
-
-class NewItemForm(FlaskForm):
+class ItemForm(FlaskForm):
     title       = StringField("Title", validators=[InputRequired("Please fill out this field."),
                                                    DataRequired("Data is required."),
                                                    Length(min=5, max=20, message="Input must be between 5 and 20 characters")])
@@ -22,12 +21,17 @@ class NewItemForm(FlaskForm):
     description = TextAreaField("Description", validators=[InputRequired("Please fill out this field."),
                                                            DataRequired("Data is required."),
                                                            Length(min=5, max=40, message="Input must be between 5 and 40 characters")])
+
+class NewItemForm(ItemForm):
     category    = SelectField("Category", coerce=int)
     subcategory = SelectField("Subcategory", coerce=int)
     submit      = SubmitField("Submit")
 
 class DeleteItemForm(FlaskForm):
     submit      = SubmitField("Delete item")
+
+class EditItemForm(ItemForm):
+    submit      = SubmitField("Update Item")
 
 @app.route('/')
 def home():
@@ -162,6 +166,53 @@ def delete_item(item_id):
         flash("This item does not exist.", "danger")
 
     return redirect(url_for("home"))
+
+
+@app.route('/item/<int:item_id>/edit', methods=["GET", "POST"])
+def edit_item(item_id):
+    conn = get_db()
+    c = conn.cursor()
+    item_from_db = c.execute("SELECT * FROM items WHERE id = ?", (item_id,))
+    row = c.fetchone()
+    try:
+        item = {
+            "id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "price": row[3],
+            "image": row[4],
+        }
+    except:
+        item = {}
+    
+    if item:
+        form = EditItemForm()
+        if form.validate_on_submit():
+            c.execute("""UPDATE items SET
+            title = ?, description = ?, price = ?
+            WHERE id = ?""",
+                (
+                    form.title.data,
+                    form.description.data,
+                    float(form.price.data),
+                    item_id
+                )
+            )
+            conn.commit()
+
+            flash("Item {} has been successfully updated".format(form.title.data), "success")
+            return redirect(url_for("item", item_id=item["id"]))
+        
+        form.title.data       = item["title"]
+        form.description.data = item["description"]
+        form.price.data       = item["price"]
+
+        if form.errors:
+            flash("{}".format(form.errors), "danger")
+        return render_template("edit_item.html", item=item, form=form)
+    else:
+        return redirect(url_for("home"))
+
 
 def get_db():
     db = getattr(g, "_database", None)
