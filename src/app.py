@@ -5,7 +5,7 @@ from re import sub
 from flask import Flask, render_template, request, redirect, url_for, g, flash, send_from_directory
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileRequired
-from werkzeug.utils import secure_filename, send_from_directory
+from werkzeug.utils import secure_filename
 from wtforms import StringField, TextAreaField, SubmitField, SelectField, DecimalField, FileField
 from wtforms.fields.simple import FileField
 from wtforms.validators import InputRequired, DataRequired, Length
