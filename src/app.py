@@ -154,14 +154,8 @@ def new_item():
     # [(1, 'Food'), (2, 'Technology'), (3, 'Books')]
     form.subcategory.choices = subcategories
 
-    if form.validate_on_submit():
-
-        format = "%Y%m%dT%H%M%S"
-        now = datetime.datetime.utcnow().strftime(format)
-        random_string = token_hex(2)
-        filename = random_string + "_" + now + "_" + form.image.data.filename
-        filename = secure_filename(filename)
-        form.image.data.save(os.path.join(app.config["IMAGE_UPLOADS"], filename))
+    if form.validate_on_submit() and form.image.validate(form, extra_validators=(FileRequired,)):
+        filename = save_image_upload(form.image)
 
         # Process the form data
         c.execute("""INSERT INTO items
@@ -267,13 +261,19 @@ def edit_item(item_id):
     if item:
         form = EditItemForm()
         if form.validate_on_submit():
+
+            filename = item["image"]
+            if form.image.data:
+                filename = save_image_upload(form.image)
+
             c.execute("""UPDATE items SET
-            title = ?, description = ?, price = ?
+            title = ?, description = ?, price = ?, image = ?
             WHERE id = ?""",
                 (
                     form.title.data,
                     form.description.data,
                     float(form.price.data),
+                    filename,
                     item_id
                 )
             )
@@ -292,6 +292,14 @@ def edit_item(item_id):
     else:
         return redirect(url_for("home"))
 
+def save_image_upload(image):
+        format = "%Y%m%dT%H%M%S"
+        now = datetime.datetime.utcnow().strftime(format)
+        random_string = token_hex(2)
+        filename = random_string + "_" + now + "_" + image.data.filename
+        filename = secure_filename(filename)
+        image.data.save(os.path.join(app.config["IMAGE_UPLOADS"], filename))
+        return filename
 
 def get_db():
     db = getattr(g, "_database", None)
