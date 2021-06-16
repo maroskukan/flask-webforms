@@ -8,7 +8,7 @@ from flask_wtf.file import FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
 from wtforms import StringField, TextAreaField, SubmitField, SelectField, DecimalField, FileField
 from wtforms.fields.simple import FileField
-from wtforms.validators import InputRequired, DataRequired, Length
+from wtforms.validators import InputRequired, DataRequired, Length, ValidationError
 from werkzeug.utils import secure_filename
 
 import sqlite3
@@ -25,6 +25,21 @@ app.config['ALLOWED_IMAGE_EXTENSIONS'] = ["jpeg", "jpg", "png"]
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #16 MB
 app.config['IMAGE_UPLOADS'] = os.path.join(basedir, "uploads")
 
+def belongs_to_category(message):
+    message = message
+
+    def _belongs_to_category(form, field):
+        c = get_db().cursor()
+        c.execute("""SELECT COUNT(*) FROM subcategories
+                        WHERE id = ? AND category_id = ?""",
+                        (field.data, form.category.data)
+        )
+        exists = c.fetchone()[0]
+        if not exists:
+            raise ValidationError(message)
+    
+    return _belongs_to_category
+
 class ItemForm(FlaskForm):
     title       = StringField("Title", validators=[InputRequired("Please fill out this field."),
                                                    DataRequired("Data is required."),
@@ -37,7 +52,7 @@ class ItemForm(FlaskForm):
 
 class NewItemForm(ItemForm):
     category    = SelectField("Category", coerce=int)
-    subcategory = SelectField("Subcategory", coerce=int)
+    subcategory = SelectField("Subcategory", coerce=int, validators=[belongs_to_category("Custom error message")])
     submit      = SubmitField("Submit")
 
 class DeleteItemForm(FlaskForm):
@@ -291,6 +306,7 @@ def edit_item(item_id):
         return render_template("edit_item.html", item=item, form=form)
     else:
         return redirect(url_for("home"))
+
 
 def save_image_upload(image):
         format = "%Y%m%dT%H%M%S"
