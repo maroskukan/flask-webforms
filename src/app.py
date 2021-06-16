@@ -194,7 +194,7 @@ def new_item():
     # [(1, 'Food'), (2, 'Technology'), (3, 'Books')]
     form.subcategory.choices = subcategories
 
-    if form.validate_on_submit() and form.image.validate(form, extra_validators=(FileRequired,)):
+    if form.validate_on_submit() and form.image.validate(form, extra_validators=(FileRequired(),)):
         filename = save_image_upload(form.image)
 
         # Process the form data
