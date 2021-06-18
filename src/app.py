@@ -5,11 +5,10 @@ from re import sub
 from flask import Flask, render_template, request, redirect, url_for, g, flash, send_from_directory
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileRequired
-from werkzeug.utils import secure_filename
 from wtforms import StringField, TextAreaField, SubmitField, SelectField, DecimalField, FileField
 from wtforms.fields.simple import FileField
 from wtforms.validators import InputRequired, DataRequired, Length, ValidationError
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename, escape, unescape
 
 import sqlite3
 #import pdb
@@ -125,7 +124,7 @@ def home():
 
         if form.title.data.strip():
             filter_queries.append("i.title LIKE ?")
-            parameters.append("%" + form.title.data + "%")
+            parameters.append("%" + escape(form.title.data) + "%")
         
         if form.category.data:
             filter_queries.append("i.category_id = ?")
@@ -202,8 +201,8 @@ def new_item():
                     (title, description, price, image, category_id, subcategory_id)
                     VALUES(?,?,?,?,?,?)""",
                   (
-                      form.title.data,
-                      form.description.data,
+                      escape(form.title.data),
+                      escape(form.description.data),
                       float(form.price.data),
                       filename,
                       form.category.data,
@@ -310,8 +309,8 @@ def edit_item(item_id):
             title = ?, description = ?, price = ?, image = ?
             WHERE id = ?""",
                 (
-                    form.title.data,
-                    form.description.data,
+                    escape(form.title.data),
+                    escape(form.description.data),
                     float(form.price.data),
                     filename,
                     item_id
@@ -322,8 +321,8 @@ def edit_item(item_id):
             flash("Item {} has been successfully updated".format(form.title.data), "success")
             return redirect(url_for("item", item_id=item["id"]))
         
-        form.title.data       = item["title"]
-        form.description.data = item["description"]
+        form.title.data       = unescape(item["title"])
+        form.description.data = unescape(item["description"])
         form.price.data       = item["price"]
 
         if form.errors:
