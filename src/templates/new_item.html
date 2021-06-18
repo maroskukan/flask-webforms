@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% set active_page = 'new_item' %}
+{% from "_error_messages.html" import error_messages %}
 {% block title %}Add new item - {% endblock %}
 
 {% block content %}
@@ -8,16 +9,7 @@
         <h1>Add new item</h1><hr>
         <form method="POST" action="{{ url_for('new_item') }}" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
-            {% if form.errors %}
-            <div class="alert alert-danger">
-                {% for field in form.errors %}
-                  <b>{{ field | capitalize }} field has following erros:</b><br>
-                  {% for error in form.errors[field] %}
-                  {{ error }}<br>
-                  {% endfor %}
-                {% endfor %}
-            </div>
-            {% endif %}
+            {{ error_messages(form.errors) }}
             <div class="form-group">
                 {{ form.title.label }}
                 {{ form.title(class="form-control") }}
