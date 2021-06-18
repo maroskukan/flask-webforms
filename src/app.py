@@ -23,6 +23,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 app.config['ALLOWED_IMAGE_EXTENSIONS'] = ["jpeg", "jpg", "png"]
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #16 MB
 app.config['IMAGE_UPLOADS'] = os.path.join(basedir, "uploads")
+app.config['TESTING'] = True
 app.config['RECAPTCHA_PUBLIC_KEY'] = os.environ.get('RECAPTCHA_PUBLIC_KEY')
 app.config['RECAPTCHA_PRIVATE_KEY'] = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
@@ -75,11 +76,11 @@ class ItemForm(FlaskForm):
                                                            DataRequired("Data is required."),
                                                            Length(min=5, max=40, message="Input must be between 5 and 40 characters")])
     image       = FileField("Image", validators=[FileRequired(), FileAllowed(app.config["ALLOWED_IMAGE_EXTENSIONS"], "Images only!")])
-    recaptcha   = RecaptchaField()
 
 class NewItemForm(ItemForm):
     category    = SelectField("Category", coerce=int)
     subcategory = SelectField("Subcategory", coerce=int, validators=[BelongsToOtherFieldOption(table="subcategories", belongs_to="category", message="Subcategory does not belong to that category.")])
+    recaptcha   = RecaptchaField()
     submit      = SubmitField("Submit")
 
 class DeleteItemForm(FlaskForm):
