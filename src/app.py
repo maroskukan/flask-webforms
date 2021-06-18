@@ -47,6 +47,9 @@ class PriceInput(Input):
                     <input %s>
         </div>""" % self.html_params(name=field.name, **kwargs))
 
+class PriceField(DecimalField):
+    widget = PriceInput()
+
 class BelongsToOtherFieldOption:
     def __init__(self, table, belongs_to, foreign_key=None, message=None):
         if not table:
@@ -91,7 +94,7 @@ class ItemForm(FlaskForm):
     title       = StringField("Title", validators=[InputRequired("Please fill out this field."),
                                                    DataRequired("Data is required."),
                                                    Length(min=5, max=20, message="Input must be between 5 and 20 characters")])
-    price       = DecimalField("Price", widget=PriceInput())
+    price       = PriceField("Price")
     description = TextAreaField("Description", validators=[InputRequired("Please fill out this field."),
                                                            DataRequired("Data is required."),
                                                            Length(min=5, max=40, message="Input must be between 5 and 40 characters")])
