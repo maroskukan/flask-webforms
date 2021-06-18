@@ -242,8 +242,6 @@ def new_item():
             request.form.get("title")), "success")
         return redirect(url_for("home"))
     
-    if form.errors:
-        flash("{}".format(form.errors), "danger")
     return render_template("new_item.html", form=form)
 
 
@@ -352,11 +350,9 @@ def edit_item(item_id):
         form.description.data = unescape(item["description"])
         form.price.data       = item["price"]
 
-        if form.errors:
-            flash("{}".format(form.errors), "danger")
         return render_template("edit_item.html", item=item, form=form)
-    else:
-        return redirect(url_for("home"))
+
+    return redirect(url_for("home"))
 
 
 def save_image_upload(image):
