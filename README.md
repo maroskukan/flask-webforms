@@ -31,8 +31,8 @@ Verify that application works by running a container from image.
 ```bash
 docker container run -it --rm -p 8000:80 \
 			      -e PORT=80 \
-            -e SECRET_KEY="<your-secret-key" \
-            -e RECAPTCHA_PUBLIC_KEY="<your-recaptcha-public-key>" \
+                              -e SECRET_KEY="<your-secret-key" \
+                              -e RECAPTCHA_PUBLIC_KEY="<your-recaptcha-public-key>" \
 			      -e RECAPTCHA_PRIVATE_KEY="<your-recaptcha-private-key>" \
 			      maroskukan/webforms:latest
  * Serving Flask app 'app' (lazy loading)
