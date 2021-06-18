@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, request, redirect, url_for, g, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, g, flash, send_from_directory, jsonify
 from flask_wtf import FlaskForm, RecaptchaField
 from flask_wtf.file import FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField, SubmitField, SelectField, DecimalField, FileField
-from wtforms import widgets
-from wtforms.fields.simple import FileField
 from wtforms.validators import InputRequired, DataRequired, Length, ValidationError
 from wtforms.widgets import Input
 from werkzeug.utils import secure_filename, escape, unescape
@@ -131,7 +129,7 @@ def home():
     categories.insert(0, (0, "---"))
     form.category.choices = categories
 
-    c.execute("SELECT id, name FROM subcategories WHERE category_id = ?", (1,))
+    c.execute("SELECT id, name FROM subcategories")
     subcategories = c.fetchall()
     subcategories.insert(0, (0,"---"))
     form.subcategory.choices = subcategories
@@ -212,10 +210,7 @@ def new_item():
     # [(1, 'Food'), (2, 'Technology'), (3, 'Books')]
     form.category.choices = categories
 
-    c.execute("""SELECT id, name FROM subcategories
-                WHERE category_id = ?""",
-                (1,)
-    )
+    c.execute("SELECT id, name FROM subcategories")
     subcategories = c.fetchall()
     # [(1, 'Food'), (2, 'Technology'), (3, 'Books')]
     form.subcategory.choices = subcategories
@@ -354,6 +349,17 @@ def edit_item(item_id):
 
     return redirect(url_for("home"))
 
+
+@app.route('/category/<int:category_id>')
+def category(category_id):
+    c = get_db().cursor()
+    c.execute("""SELECT id, name FROM subcategories
+                 WHERE category_id = ?""",
+                 (category_id,)
+    )
+    subcategories = c.fetchall()
+
+    return jsonify(subcategories=subcategories)
 
 def save_image_upload(image):
         format = "%Y%m%dT%H%M%S"
