@@ -391,6 +391,11 @@ def new_comment():
     c = conn.cursor()
     form = NewCommentForm()
 
+    try:
+        is_ajax = int(request.form["ajax"])
+    except:
+        is_ajax = 0
+    
     if form.validate_on_submit():
 
         c.execute("""INSERT INTO comments (content, item_id)
@@ -401,7 +406,12 @@ def new_comment():
                      )
         )
         conn.commit()
+
+        if is_ajax:
+            return render_template("_comment.html", content=form.content.data)
     
+    if is_ajax:
+        return "Content is required.", 400
     return redirect(url_for('item', item_id=form.item_id.data))
 
 def save_image_upload(image):
