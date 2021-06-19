@@ -4,7 +4,7 @@
 from flask import Flask, render_template, request, redirect, url_for, g, flash, send_from_directory, jsonify
 from flask_wtf import FlaskForm, RecaptchaField
 from flask_wtf.file import FileAllowed, FileRequired
-from wtforms import StringField, TextAreaField, SubmitField, SelectField, DecimalField, FileField
+from wtforms import StringField, TextAreaField, SubmitField, SelectField, DecimalField, FileField, HiddenField
 from wtforms.validators import InputRequired, DataRequired, Length, ValidationError
 from wtforms.widgets import Input
 from werkzeug.utils import secure_filename, escape, unescape
@@ -116,6 +116,11 @@ class FilterForm(FlaskForm):
     category    = SelectField("Category", coerce=int)
     subcategory = SelectField("Subcategory", coerce=int)
     submit      = SubmitField("Filter")
+
+class NewCommentForm(FlaskForm):
+    content = TextAreaField("Comment", validators=[InputRequired("Input is required."), DataRequired("Data is required.")])
+    item_id = HiddenField(validators=[DataRequired()])
+    submit  = SubmitField("Submit")
 
 @app.route('/')
 def home():
@@ -268,9 +273,27 @@ def item(item_id):
         item = {}
     
     if item:
+        comments_from_db = c.execute("""SELECT content FROM comments
+                    WHERE item_id = ? ORDER BY id DESC""",
+                    (item_id,)
+        )
+        comments = []
+        for row in comments_from_db:
+            comment = {
+                "content": row[0]
+            }
+            comments.append(comment)
+
+        commentForm = NewCommentForm()
+        commentForm.item_id.data = item_id
+
         deleteItemForm = DeleteItemForm()
 
-        return render_template("item.html", item=item, deleteItemForm=deleteItemForm)
+        return render_template("item.html",
+                                item=item,
+                                comments=comments,
+                                deleteItemForm=deleteItemForm,
+                                commentForm=commentForm)
     return redirect(url_for("home"))
 
 
@@ -360,6 +383,26 @@ def category(category_id):
     subcategories = c.fetchall()
 
     return jsonify(subcategories=subcategories)
+
+
+@app.route('/comment/new', methods=["POST"])
+def new_comment():
+    conn = get_db()
+    c = conn.cursor()
+    form = NewCommentForm()
+
+    if form.validate_on_submit():
+
+        c.execute("""INSERT INTO comments (content, item_id)
+                     VALUES (?,?)""",
+                     (
+                         escape(form.content.data),
+                         form.item_id.data
+                     )
+        )
+        conn.commit()
+    
+    return redirect(url_for('item', item_id=form.item_id.data))
 
 def save_image_upload(image):
         format = "%Y%m%dT%H%M%S"
